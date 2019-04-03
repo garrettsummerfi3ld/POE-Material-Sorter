@@ -15,28 +15,18 @@ bool detect = true;
 bool callReset = true;
 
 // Variables for referencing to base values of materials
-// Nothing
-int nothingLineVal = 2660;
-int nothingLightVal = 55;
-
 // Steel Vals
 int steelLineVal = 2890;
 int steelLightVal = 315;
-
 // Clear Vals
 int clearLineVal = 2890;
 int clearLightVal = 20;
-
 // Wood vals
 int woodLineVal = 1410;
 int woodLightVal = 325;
-
 // Plastic Vals
 int plasticLineVal = 300;
 int plasticLightVal = 210;
-
-// Variables for counting all the materials
-int clearCount, steelCount, woodCount, plasticCount, totalCount = 0;
 
 // Hardware variables
 int lightVal = SensorValue(lightSensor);
@@ -44,80 +34,52 @@ int lineVal = SensorValue(lineFollower);
 int encoderVal = SensorValue(encoder);
 
 // Checks for around the goal amount for each material
-bool checkAround(int value, int goal)
-{
-	if (value > 1000)
-	{
-		if (goal - 500 < value && value < goal + 500)
-		{
+bool checkAround(int value, int goal) {
+	if (value > 1000) {
+		if (goal - 500 < value && value < goal + 500) {
 			return true;
-		}
-		else
-		{
+		} else {
 			return false;
 		}
-	}
-	else
-	{
-		if (goal - 40 < value && value < goal + 40)
-		{
+	} else {
+		if (goal - 40 < value && value < goal + 40) {
 			return true;
-		}
-		else
-		{
+		} else {
 			return false;
 		}
 	}
 }
 
 // Detects the item in the sorting mechanism
-task detectMaterial()
-{
+task detectMaterial() {
 	writeDebugStreamLine("[DETECT] 'detectMaterial' task started!");
-	while (detect)
-	{
-		if (lightVal > 30 || lineVal < 2960)
-		{
+	while (detect) {
+		if (lightVal > 30 || lineVal < 2960) {
 			writeDebugStreamLine("[DETECT] Detecting material...");
-
 			// Clear detection process
-			if (checkAround(lightVal, clearLightVal) && checkAround(lineVal, clearLineVal))
-			{
+			if (checkAround(lightVal, clearLightVal) && checkAround(lineVal, clearLineVal)) {
 				writeDebugStreamLine("[DETECT] Detecting 'clear'...");
-				clearCount++;
-				totalCount++;
 				calledStorageContainer = 1;
 				wait(1);
 			}
 			// Plastic detection process
-			if (checkAround(lightVal, plasticLightVal) && checkAround(lineVal, plasticLineVal))
-			{
+			if (checkAround(lightVal, plasticLightVal) && checkAround(lineVal, plasticLineVal)) {
 				writeDebugStreamLine("[DETECT] Detecting 'plastic'...");
-				plasticCount++;
-				totalCount++;
 				calledStorageContainer = 2;
 				wait(1);
 			}
 			// Wood detection process
-			if (checkAround(lightVal, woodLightVal) && checkAround(lineVal, woodLineVal))
-			{
+			if (checkAround(lightVal, woodLightVal) && checkAround(lineVal, woodLineVal)) {
 				writeDebugStreamLine("[DETECT] Detecting 'wood'...");
-				woodCount++;
-				totalCount++;
 				calledStorageContainer = 3;
 				wait(1);
 			}
 			// Steel detection process
-			if (checkAround(lightVal, steelLightVal) && checkAround(lineVal, steelLineVal))
-			{
+			if (checkAround(lightVal, steelLightVal) && checkAround(lineVal, steelLineVal)) {
 				writeDebugStreamLine("[DETECT] Detecting 'steel'...");
-				steelCount++;
-				totalCount++;
 				calledStorageContainer = 4;
 				wait(1);
-			}
-			else
-			{
+			}	else {
 				writeDebugStreamLine("[DETECT] Nothing is recognized!");
 				wait(1);
 			}
@@ -126,24 +88,17 @@ task detectMaterial()
 }
 
 // Moves the platform positive to the desired storage container
-task rotatePosititve()
-{
-
+task rotatePosititve() {
 	// While not detecting...
-	while (!detect)
-	{
-
+	while (!detect) {
 		// Power motor
 		motor[turntableMotor] = 67;
-
 		// If current storage container is one less than the called storage container...
-		if (!(currentStorageContainer < calledStorageContainer - 1))
-		{
+		if (!(currentStorageContainer < calledStorageContainer - 1)) {
 			// Slow motor
 			motor[turntableMotor] = 10;
 			// If current storage container matches called container...
-			if (currentStorageContainer == calledStorageContainer)
-			{
+			if (currentStorageContainer == calledStorageContainer) {
 				// Kill motor, reset called storage container and reset detect and call reset flags
 				motor[turntableMotor] = 0;
 				motor[rodMotor] = 67;
@@ -159,24 +114,17 @@ task rotatePosititve()
 }
 
 // Moves the platform negative to the desired storage container
-task rotateNegative()
-{
+task rotateNegative() {
 	// While not detecting...
-	while (!detect)
-	{
-
+	while (!detect) {
 		// Power Motor
 		motor[turntableMotor] = -67;
-
 		// If if current storage container is one higher than called container...
-		if (!(currentStorageContainer > calledStorageContainer + 1))
-		{
+		if (!(currentStorageContainer > calledStorageContainer + 1)) {
 			// Slow motor
 			motor[turntableMotor] = -10;
-
 			// If current storage container matches the called container
-			if (currentStorageContainer == calledStorageContainer)
-			{
+			if (currentStorageContainer == calledStorageContainer) {
 				// Kill motor, reset called storage containre and reset detect and call reset flags
 				motor[turntableMotor] = 0;
 				motor[rodMotor] = 67;
@@ -192,34 +140,28 @@ task rotateNegative()
 }
 
 // Sets the turntable turn to whatever encoder value is set
-task detectStorageContainer()
-{
-	while (true)
-	{
+task detectStorageContainer() {
+	while (true) {
 		// Clear Storage
-		if (encoderVal == 0)
-		{
+		if (encoderVal >= -15 && encoderVal <= 15) {
 			writeDebugStreamLine("[SORT] Detected storage container 1");
 			currentStorageContainer = 1;
 			wait(1);
 		}
 		// Plastic Storage
-		if (encoderVal == 90)
-		{
+		if (encoderVal >= 75 && encoderVal <= 105) {
 			writeDebugStreamLine("[SORT] Detected storage container 2");
 			currentStorageContainer = 2;
 			wait(1);
 		}
 		// Wood Storage
-		if (encoderVal == 180)
-		{
+		if (encoderVal >= 165 && encoderVal <= 195) {
 			writeDebugStreamLine("[SORT] Detected storage container 3");
 			currentStorageContainer = 3;
 			wait(1);
 		}
 		// Steel Storage
-		if (encoderVal == 270)
-		{
+		if (encoderVal >= 255 && encoderVal <= 285) {
 			writeDebugStreamLine("[SORT] Detected storage container 4");
 			currentStorageContainer = 4;
 			wait(1);
@@ -228,49 +170,30 @@ task detectStorageContainer()
 }
 
 // Logic for sensor readings and how to process
-task checkDetect()
-{
-
+task checkDetect() {
 	// Clearing timer
 	writeDebugStreamLine("[LISTEN] clearing timer 'T1'...");
 	clearTimer(T1);
 	writeDebugStreamLine("[LISTEN] Timer cleared!");
-	while (detect)
-	{
+	while (detect) {
 		// Only activate after init
-		if (calledStorageContainer > 0)
-		{
+		if (calledStorageContainer > 0) {
 			// Set detect variable to false
 			// This prevents any other input from the sensors
 			writeDebugStreamLine("[LISTEN] Attemping to stop detecting to inputs...");
 			detect = false;
 			writeDebugStreamLine("[LISTEN] Stopped detecting!");
-
 			// Conditionals for what storage container is there
-			if (currentStorageContainer < calledStorageContainer)
-			{
+			if (currentStorageContainer < calledStorageContainer) {
 				startTask(rotatePosititve);
-			}
-			else if (currentStorageContainer > calledStorageContainer)
-			{
+			} else if (currentStorageContainer > calledStorageContainer) {
 				startTask(rotateNegative);
-			}
-			else
-			{
-
+			} else {
 				// waitTimer var is assigned to T1
 				waitTimer = T1;
-
 				// Starts time for Idle process
-				if (waitTimer > 20000)
-				{
+				if (waitTimer > 20000) {
 					writeDebugStreamLine("[IDLE] Starting idle process...");
-					writeDebugStreamLine("[IDLE] Total counts of all materials:");
-					writeDebugStreamLine("Clear: %d", clearCount);
-					writeDebugStreamLine("Plastic: %d", plasticCount);
-					writeDebugStreamLine("Wood: %d", woodCount);
-					writeDebugStreamLine("Steel: %d", steelCount);
-					writeDebugStreamLine("TOTAL: %d", totalCount);
 					calledStorageContainer = 1;
 				}
 			}
@@ -279,20 +202,15 @@ task checkDetect()
 }
 
 // Main task
-// This task starts the rest of the tasks for the actual processes of sorting
-task main()
-{
+task main() {
 	clearDebugStream();
-
 	// Storage container detection
 	startTask(detectStorageContainer);
-	while (true)
-	{
+	while (true) {
 		// Flash turning on
 		turnFlashlightOn(flash, -127);
 		// Call reset
-		if (callReset)
-		{
+		if (callReset) {
 			// Set var to false and run two tasks
 			callReset = false;
 			startTask(checkDetect);
