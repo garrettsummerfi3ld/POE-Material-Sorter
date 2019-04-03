@@ -123,12 +123,16 @@ task rotatePosititve() {
 
 		// If current storage container is one less than the called storage container...
 		if (!(currentStorageContainer < calledStorageContainer - 1)) {
-			// Power motor at slow speed
+			// Slow motor
 			motor[turntableMotor] = 10;
 			// If current storage container matches called container...
 			if(currentStorageContainer == calledStorageContainer) {
 				// Kill motor, reset called storage container and reset detect and call reset flags
 				motor[turntableMotor] = 0;
+				motor[rodMotor] = 67;
+				wait(1000);
+				motor[rodMotor] = -67;
+				wait(1000);
 				calledStorageContainer = 0;
 				detect = true;
 				callReset = true;
@@ -139,12 +143,25 @@ task rotatePosititve() {
 
 // Moves the platform negative to the desired storage container
 task rotateNegative() {
+	// While not detecting...
 	while(!detect) {
+
+		// Power Motor
 		motor[turntableMotor] = -67;
+
+		// If if current storage container is one higher than called container...
 		if (!(currentStorageContainer > calledStorageContainer + 1)) {
+			// Slow motor
 			motor[turntableMotor] = -10;
+
+			// If current storage container matches the called container
 			if(currentStorageContainer == calledStorageContainer) {
+				// Kill motor, reset called storage containre and reset detect and call reset flags
 				motor[turntableMotor] = 0;
+				motor[rodMotor] = 67;
+				wait(1000);
+				motor[rodMotor] = -67;
+				wait(1000);
 				calledStorageContainer = 0;
 				detect = true;
 				callReset = true;
@@ -234,10 +251,9 @@ task checkdetect() {
 // This task starts the rest of the tasks for the actual processes of sorting
 task main() {
 	clearDebugStream();
-	// Detects what storage contaienr
-	startTask(detectStorageContainer);
 	while(true) {
-
+		// Detects what storage contaienr
+		startTask(detectStorageContainer);
 		// Flash turning on
 		turnFlashlightOn(flash, -127);
 
