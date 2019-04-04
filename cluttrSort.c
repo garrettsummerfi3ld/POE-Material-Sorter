@@ -16,35 +16,34 @@ bool callReset = true;
 
 // Variables for referencing to base values of materials
 // Steel Vals
-int steelLineVal = 2890;
-int steelLightVal = 315;
+int steelLineVal = 220;
+int steelLightVal = 2200;
 // Clear Vals
-int clearLineVal = 2890;
-int clearLightVal = 20;
+int clearLineVal = 40;
+int clearLightVal = 2800;
 // Wood vals
-int woodLineVal = 1410;
-int woodLightVal = 325;
+int woodLineVal = 600;
+int woodLightVal = 1800;
 // Plastic Vals
-int plasticLineVal = 300;
+int plasticLineVal = 150;
 int plasticLightVal = 210;
-
-// Hardware variables
-int lightVal = SensorValue(lightSensor);
-int lineVal = SensorValue(lineFollower);
-int encoderVal = SensorValue(encoder);
 
 // Checks for around the goal amount for each material
 bool checkAround(int value, int goal) {
 	if (value > 1000) {
 		if (goal - 500 < value && value < goal + 500) {
+			writeDebugStreamLine("[GOAL] True!");
 			return true;
 		} else {
+			writeDebugStreamLine("[GOAL] False!");
 			return false;
 		}
 	} else {
 		if (goal - 40 < value && value < goal + 40) {
+			writeDebugStreamLine("[GOAL] True!");
 			return true;
 		} else {
+			writeDebugStreamLine("[GOAL] False!");
 			return false;
 		}
 	}
@@ -52,35 +51,35 @@ bool checkAround(int value, int goal) {
 
 // Detects the item in the sorting mechanism
 task detectMaterial() {
-	writeDebugStreamLine("[DETECT] 'detectMaterial' task started!");
+	writeDebugStreamLine("[DECT] 'detectMaterial' task started!");
 	while (detect) {
-		if (lightVal > 30 || lineVal < 2960) {
-			writeDebugStreamLine("[DETECT] Detecting material...");
+		if (SensorValue(lightSensor) > 30 || SensorValue(lineFollower) < 2960) {
+			writeDebugStreamLine("[DECT] Detecting material...");
 			// Clear detection process
-			if (checkAround(lightVal, clearLightVal) && checkAround(lineVal, clearLineVal)) {
-				writeDebugStreamLine("[DETECT] Detecting 'clear'...");
+			if (checkAround(SensorValue(lightSensor), clearLightVal) && checkAround(SensorValue(lineFollower), clearLineVal)) {
+				writeDebugStreamLine("[DECT] Detecting 'clear'...");
 				calledStorageContainer = 1;
 				wait(1);
 			}
 			// Plastic detection process
-			if (checkAround(lightVal, plasticLightVal) && checkAround(lineVal, plasticLineVal)) {
-				writeDebugStreamLine("[DETECT] Detecting 'plastic'...");
+			if (checkAround(SensorValue(lightSensor), plasticLightVal) && checkAround(SensorValue(lineFollower), plasticLineVal)) {
+				writeDebugStreamLine("[DECT] Detecting 'plastic'...");
 				calledStorageContainer = 2;
 				wait(1);
 			}
 			// Wood detection process
-			if (checkAround(lightVal, woodLightVal) && checkAround(lineVal, woodLineVal)) {
-				writeDebugStreamLine("[DETECT] Detecting 'wood'...");
+			if (checkAround(SensorValue(lightSensor), woodLightVal) && checkAround(SensorValue(lineFollower), woodLineVal)) {
+				writeDebugStreamLine("[DECT] Detecting 'wood'...");
 				calledStorageContainer = 3;
 				wait(1);
 			}
 			// Steel detection process
-			if (checkAround(lightVal, steelLightVal) && checkAround(lineVal, steelLineVal)) {
-				writeDebugStreamLine("[DETECT] Detecting 'steel'...");
+			if (checkAround(SensorValue(lightSensor), steelLightVal) && checkAround(SensorValue(lineFollower), steelLineVal)) {
+				writeDebugStreamLine("[DECT] Detecting 'steel'...");
 				calledStorageContainer = 4;
 				wait(1);
 			}	else {
-				writeDebugStreamLine("[DETECT] Nothing is recognized!");
+				writeDebugStreamLine("[DECT] [WARN] Nothing is recognized! Are the values calibrated for the room?");
 				wait(1);
 			}
 		}
@@ -92,23 +91,31 @@ task rotatePosititve() {
 	// While not detecting...
 	while (!detect) {
 		// Power motor
-		motor[turntableMotor] = 67;
+		writeDebugStreamLine("[ROTE] [POS] Powering motor to '30'...");
+		motor[turntableMotor] = 30;
 		// If current storage container is one less than the called storage container...
-		if (!(currentStorageContainer < calledStorageContainer - 1)) {
+		if (currentStorageContainer == calledStorageContainer - 1) {
 			// Slow motor
+			writeDebugStreamLine("[ROTE] [POS] Slowing down motor to '10'...");
 			motor[turntableMotor] = 10;
-			// If current storage container matches called container...
-			if (currentStorageContainer == calledStorageContainer) {
-				// Kill motor, reset called storage container and reset detect and call reset flags
-				motor[turntableMotor] = 0;
-				motor[rodMotor] = 67;
-				wait(1000);
-				motor[rodMotor] = -67;
-				wait(1000);
-				calledStorageContainer = 0;
-				detect = true;
-				callReset = true;
-			}
+		}
+		// If current storage container matches called container...
+		if (currentStorageContainer == calledStorageContainer) {
+			// Kill motor, push material with rodMotor, reset called storage container and reset detect and call reset flags
+			writeDebugStreamLine("[ROTE] [POS] Stopping turntableMotor...");
+			motor[turntableMotor] = 0;
+			writeDebugStreamLine("[ROTE] [POS] Stopped!");
+			writeDebugStreamLine("[ROTE] [POS] Starting rodMotor...");
+			motor[rodMotor] = 30;
+			wait(1);
+			writeDebugStreamLine("[ROTE] [POS] Reversing rodMotor...");
+			motor[rodMotor] = -30;
+			wait(1);
+			writeDebugStreamLine("[ROTE] [POS] Stopping rodMotor...");
+			motor[rodMotor] = 0;
+			calledStorageContainer = 0;
+			detect = true;
+			callReset = true;
 		}
 	}
 }
@@ -118,23 +125,31 @@ task rotateNegative() {
 	// While not detecting...
 	while (!detect) {
 		// Power Motor
-		motor[turntableMotor] = -67;
+		writeDebugStreamLine("[ROTE] [NEG] Powering motor to '30'...");
+		motor[turntableMotor] = -30;
 		// If if current storage container is one higher than called container...
-		if (!(currentStorageContainer > calledStorageContainer + 1)) {
+		if (currentStorageContainer == calledStorageContainer + 1) {
 			// Slow motor
+			writeDebugStreamLine("[ROTE] [NEG] Slowing down motor to '10'...");
 			motor[turntableMotor] = -10;
-			// If current storage container matches the called container
-			if (currentStorageContainer == calledStorageContainer) {
-				// Kill motor, reset called storage containre and reset detect and call reset flags
-				motor[turntableMotor] = 0;
-				motor[rodMotor] = 67;
-				wait(1000);
-				motor[rodMotor] = -67;
-				wait(1000);
-				calledStorageContainer = 0;
-				detect = true;
-				callReset = true;
-			}
+		}
+		// If current storage container matches the called container
+		if (currentStorageContainer == calledStorageContainer) {
+			// Kill motor, reset called storage container and reset detect and call reset flags
+			writeDebugStreamLine("[ROTE] [NEG] Stopping motor...");
+			motor[turntableMotor] = 0;
+			writeDebugStreamLine("[ROTE] [NEG] Stopped!");
+			writeDebugStreamLine("[ROTE] [NEG] Starting rodMotor...");
+			motor[rodMotor] = 30;
+			wait(1);
+			writeDebugStreamLine("[ROTE] [NEG] Reversing rodMotor...");
+			motor[rodMotor] = -30;
+			wait(1);
+			writeDebugStreamLine("[ROTE] [NEG] Stopping rodMotor...");
+			motor[rodMotor] = 0;
+			calledStorageContainer = 0;
+			detect = true;
+			callReset = true;
 		}
 	}
 }
@@ -142,29 +157,47 @@ task rotateNegative() {
 // Sets the turntable turn to whatever encoder value is set
 task detectStorageContainer() {
 	while (true) {
-		// Clear Storage
-		if (encoderVal >= -15 && encoderVal <= 15) {
-			writeDebugStreamLine("[SORT] Detected storage container 1");
-			currentStorageContainer = 1;
-			wait(1);
-		}
-		// Plastic Storage
-		if (encoderVal >= 75 && encoderVal <= 105) {
-			writeDebugStreamLine("[SORT] Detected storage container 2");
-			currentStorageContainer = 2;
-			wait(1);
-		}
-		// Wood Storage
-		if (encoderVal >= 165 && encoderVal <= 195) {
-			writeDebugStreamLine("[SORT] Detected storage container 3");
-			currentStorageContainer = 3;
-			wait(1);
-		}
-		// Steel Storage
-		if (encoderVal >= 255 && encoderVal <= 285) {
-			writeDebugStreamLine("[SORT] Detected storage container 4");
-			currentStorageContainer = 4;
-			wait(1);
+		if (SensorValue(encoder) > -40 && SensorValue(encoder)<= 300) {
+			// Clear Storage
+			if (SensorValue(encoder) >= -25 && SensorValue(encoder) <= 25) {
+				writeDebugStreamLine("[STOR] Detected storage container 1");
+				currentStorageContainer = 1;
+				wait(1);
+			}
+			// Plastic Storage
+			if (SensorValue(encoder) >= 65 && SensorValue(encoder) <= 115) {
+				writeDebugStreamLine("[STOR] Detected storage container 2");
+				currentStorageContainer = 2;
+				wait(1);
+			}
+			// Wood Storage
+			if (SensorValue(encoder) >= 155 && SensorValue(encoder) <= 205) {
+				writeDebugStreamLine("[STOR] Detected storage container 3");
+				currentStorageContainer = 3;
+				wait(1);
+			}
+			// Steel Storage
+			if (SensorValue(encoder) >= 245 && SensorValue(encoder) <= 295) {
+				writeDebugStreamLine("[STOR] Detected storage container 4");
+				currentStorageContainer = 4;
+				wait(1);
+			}
+			// Out of bounds negative
+			if (SensorValue(encoder) < -15) {
+				writeDebugStreamLine("[STOR] [WARN] Turntabe out of bounds in negative!");
+				writeDebugStreamLine("[STOR] Resetting position to container 1...");
+				currentStorageContainer = 0;
+				calledStorageContainer = 1;
+				wait(1);
+			}
+			// Out of bounds posititve
+			if (SensorValue(encoder) > 290) {
+				writeDebugStreamLine("[STOR] [WARN] Turntable out of bounds in positive!");
+				writeDebugStreamLine("[STOR] Resetting position to container 1...");
+				currentStorageContainer = 5;
+				calledStorageContainer = 1;
+				wait(1);
+			}
 		}
 	}
 }
@@ -172,23 +205,23 @@ task detectStorageContainer() {
 // Logic for sensor readings and how to process
 task checkDetect() {
 	// Clearing timer
-	writeDebugStreamLine("[LISTEN] clearing timer 'T1'...");
+	writeDebugStreamLine("[LSTN] clearing timer 'T1'...");
 	clearTimer(T1);
-	writeDebugStreamLine("[LISTEN] Timer cleared!");
+	writeDebugStreamLine("[LSTN] Timer cleared!");
 	while (detect) {
 		// Only activate after init
 		if (calledStorageContainer > 0) {
 			// Set detect variable to false
 			// This prevents any other input from the sensors
-			writeDebugStreamLine("[LISTEN] Attemping to stop detecting to inputs...");
+			writeDebugStreamLine("[LSTN] Attemping to stop detecting to inputs...");
 			detect = false;
-			writeDebugStreamLine("[LISTEN] Stopped detecting!");
+			writeDebugStreamLine("[LSTN] Stopped detecting!");
 			// Conditionals for what storage container is there
 			if (currentStorageContainer < calledStorageContainer) {
 				startTask(rotatePosititve);
-			} else if (currentStorageContainer > calledStorageContainer) {
+				} else if (currentStorageContainer > calledStorageContainer) {
 				startTask(rotateNegative);
-			} else {
+				} else {
 				// waitTimer var is assigned to T1
 				waitTimer = T1;
 				// Starts time for Idle process
